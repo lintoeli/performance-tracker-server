@@ -11,7 +11,7 @@
 	<groupId>com.diverso-lab</groupId>
 	<artifactId>performance-tracker</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 	<name>performance-tracker</name>
 	<description>Performance-Tracker project that enables the measurement of metrics and the benchmarking of different projects.</description>
 	<properties>
