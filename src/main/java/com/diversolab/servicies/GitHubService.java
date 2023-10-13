@@ -3,29 +3,55 @@ package com.diversolab.servicies;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.time.DateUtils;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.support.WebClientAdapter;
+import org.springframework.web.service.invoker.HttpServiceProxyFactory;
+
 import com.diversolab.entities.github.GithubIssue;
 import com.diversolab.entities.github.GithubIssueEvent;
 import com.diversolab.entities.github.GithubIssueResult;
 import com.diversolab.entities.github.GithubRelease;
-import one.util.streamex.StreamEx;
+
+import io.netty.channel.ChannelOption;
+import reactor.netty.http.client.HttpClient;
 
 @Service
 public class GitHubService implements IGitHubService {
 	
-	private String sinceDay;
-	private String untilDay;
-	private String bugLabel;
-	private String bugTitle;
-	private String owner;
-	private String repository;
-	private GitHubRestService githubRestService;
+	private String sinceDay="2023-01-01T00:00:00+00:00";
+	private String untilDay="2023-07-01T00:00:00+00:00";
+	private String bugLabel="type/bug";
+	private String bugTitle="";
+
+	private String user = "";
+	private String password = "";
+	// private MultiValueMap<String, String> mvmap = new LinkedMultiValueMap<String,String>(){
+	// 	{
+	// 		add("Authorization", Base64.getEncoder().encodeToString(String.format("%s:%s", user, password).getBytes()));
+	// 		//add("password", password);
+	// 	}
+	// };
+	// Consumer<HttpHeaders> headers = it -> it.addAll(mvmap);
+	HttpClient httpClient = HttpClient.create().responseTimeout(Duration.ofSeconds(20)).option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
+	WebClient client = WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient))
+	.codecs(codecs -> codecs
+		  .defaultCodecs()
+		  .maxInMemorySize(5000 * 1024))
+	  .defaultHeaders(header -> header.setBasicAuth(user, password)).baseUrl("https://api.github.com/").build();
+	HttpServiceProxyFactory factory = HttpServiceProxyFactory.builder(WebClientAdapter.forClient(client)).build();
+	private GitHubRestService githubRestService = factory.createClient(GitHubRestService.class);
 
 
 	/**
@@ -54,16 +80,16 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return a number used to divide issues lists given the strings of the first and last day of the period
 	 */
-	private Integer getDivider(String sinceString, String untilString){
+	private Integer getDivider(String sinceString, String untilString, String owner, String repository){
 
 		int page = 1;
 		int per_page = 100;
 
 		String queryIncidents = "repo:"+owner+"/"+repository+" is:issue created:<"+untilString+" updated:>"+sinceString+" sort:created-asc";
-		if(!bugLabel.equals("\"\"")){
+		if(!bugLabel.equals("")){
 			queryIncidents = "label:"+bugLabel+" "+queryIncidents;
 		}
-		if(!bugTitle.equals("\"\"")){
+		if(!bugTitle.equals("")){
 			queryIncidents = bugTitle+" in:title "+queryIncidents;
 		}
 
@@ -94,7 +120,7 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub releases published in given period
 	 */
-	public List<GithubRelease> getGithubReleases() {
+	public List<GithubRelease> getGithubReleases(String owner, String repository) {
 
 		int page = 1;
 		int per_page = 100;
@@ -134,7 +160,7 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub releases created in given period
 	 */
-	public List<GithubRelease> getGithubReleasesCreated(String sinceRelease, String untilRelease) {
+	public List<GithubRelease> getGithubReleasesCreated(String sinceRelease, String untilRelease, String owner, String repository) {
 
 		int page = 1;
 		int per_page = 100;
@@ -166,6 +192,8 @@ public class GitHubService implements IGitHubService {
 			page++;
 		}
 
+		System.out.println("RELEASES SIZE: "+resp.size());
+		System.out.println("RELEASES: "+resp);
 		return resp;
 
 	}
@@ -175,24 +203,30 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub deployment frequency
 	 */
-	public List<Long> getGithubDeploymentFrequency() {
+	public List<Long> getGithubDeploymentFrequency(String owner, String repository) {
 
-		List<GithubRelease> releases = this.getGithubReleases();
+		//System.out.println("SERVICE: "+githubRestService);
+
+		List<GithubRelease> releases = this.getGithubReleases(owner, repository);
 
 		releases = releases.stream().sorted(Comparator.comparing(GithubRelease::getPublishedAt)).toList();
 
-		List<Long> lista = StreamEx.of(
+		List<Long> releasesList =
 				// Get ordered builds of date completed
 				releases.stream().sorted(Comparator.comparing(GithubRelease::getPublishedAt))
 						// Map to date completed
 						.map(GithubRelease::getPublishedAt)
 						// Map to milliseconds
-						.map(Date::getTime))
-				// Pairwise differences
-				.pairMap(((p1, p2) -> p2 - p1)).toList();
-
+						.map(Date::getTime).toList();
 		
-		return lista;
+		List<Long> res = new LinkedList<>();
+
+		for(int i = 1; i < releasesList.size(); i++){
+			//System.out.println("RELEASE DATE: "+releasesList.get(i-1));
+			res.add(releasesList.get(i) - releasesList.get(i-1));
+		}
+		
+		return res;
 
 	}
 
@@ -201,7 +235,7 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub issues which last commit was made between two given dates (that usually correspond to two releases)
 	 */
-	private List<GithubIssue> getGithubIssuesCommitedInPeriod(Date sinceRelease, Date untilRelease) {
+	private List<GithubIssue> getGithubIssuesCommitedInPeriod(Date sinceRelease, Date untilRelease, String owner, String repository) {
 		int page = 1;
 		int per_page = 100;
 
@@ -224,15 +258,15 @@ public class GitHubService implements IGitHubService {
 
 		String createdSince = "";
 
-		Integer divider = this.getDivider(sinceString, untilString);
+		Integer divider = this.getDivider(sinceString, untilString, owner, repository);
 
 
 		// We do not update per_page but the query. That means that the result will be different in each iteration and, eventually the condition will be met
 		while(result.getTotalCount() >= per_page){
 
+			result = this.githubRestService.getGithubIssues(query, page, per_page);
 			System.out.println("result: "+result.getTotalCount());
 
-			result = this.githubRestService.getGithubIssues(query, page, per_page);
 			List<GithubIssue> filteredIssues = new ArrayList<>();
 			if(divider > 1){
 				for(int i = 0; i < result.getItems().size(); i++){
@@ -243,20 +277,25 @@ public class GitHubService implements IGitHubService {
 			}else{
 				filteredIssues = result.getItems();
 			}
+			System.out.println("filteredIssues: "+filteredIssues);
+
 
 			for(GithubIssue issue:filteredIssues){
 				events = this.githubRestService.getGithubIssuesEvents(owner, repository, issue.getNumber());
 				events = events.stream().filter(e -> e.getEvent().equals("referenced") && ((e.getCreatedAt().getTime() < untilRelease.getTime()) && (e.getCreatedAt().getTime() > sinceRelease.getTime()))).sorted(Comparator.comparing(GithubIssueEvent::getCreatedAt)).collect(Collectors.toList());
+				System.out.println("events: "+events);
 				if(events.size() > 0){
 					eventCreatedAt = events.get(events.size() - 1).getCreatedAt();
 					issue.setLastCommitDate(eventCreatedAt);
 					issues.add(issue);
+					System.out.println("ha entrado este issue");
 				}
 			}
 
 			//We get the creation date of the last retrieved issue (we get the list of non filtered results)
-			createdSince = simpleDateFormat.format(result.getItems().get(result.getItems().size() - 1).getCreatedAt());
+			createdSince = simpleDateFormat.format(DateUtils.addSeconds(result.getItems().get(result.getItems().size() - 1).getCreatedAt(), 1));
 			query = "repo:"+owner+"/"+repository+" is:issue created:"+createdSince+".."+untilString+" updated:>"+sinceString+" sort:created-asc";
+			System.out.println("query: "+query);
 			
 		}
 			
@@ -269,14 +308,16 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub lead time for changes (there should be at least one release created before the first created one of the releases included in the period)
 	 */
-	public List<Long> getGithubLeadTimeForChanges() { 
+	public List<Long> getGithubLeadTimeForChanges(String owner, String repository) {
+		
+		//System.out.println("SERVICE: "+githubRestService.);
 
 		System.out.println("Hol1");
 
 		int page = 1;
 		int per_page = 100;
 
-		List<GithubRelease> releases = this.getGithubReleases();
+		List<GithubRelease> releases = this.getGithubReleases(owner, repository);
 		releases = releases.stream().sorted(Comparator.comparing(GithubRelease::getCreatedAt).reversed()).collect(Collectors.toList());
 		GithubRelease lastRelease = releases.get(releases.size() - 1);
 		GithubRelease firstRelease = releases.get(0);
@@ -286,7 +327,7 @@ public class GitHubService implements IGitHubService {
 		Timestamp sinceRelease = new Timestamp(lastRelease.getCreatedAt().getTime());
 		Timestamp untilRelease = new Timestamp(firstRelease.getCreatedAt().getTime());
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+00:00'");
-		releases.addAll(this.getGithubReleasesCreated(format.format(sinceRelease), format.format(untilRelease)));
+		releases.addAll(this.getGithubReleasesCreated(format.format(sinceRelease), format.format(untilRelease), owner, repository));
 		releases = releases.stream().sorted(Comparator.comparing(GithubRelease::getCreatedAt).reversed()).collect(Collectors.toList());
 
 
@@ -310,10 +351,12 @@ public class GitHubService implements IGitHubService {
 
 		List<Long> leadTimeForChanges = new ArrayList<>();;
 		List<GithubIssue> issuesInPeriod = new ArrayList<>();
-		issuesInPeriod = this.getGithubIssuesCommitedInPeriod(releases.get(releases.size() - 1).getCreatedAt(), releases.get(0).getCreatedAt());
+		issuesInPeriod = this.getGithubIssuesCommitedInPeriod(releases.get(releases.size() - 1).getCreatedAt(), releases.get(0).getCreatedAt(), owner, repository);
+		System.out.println("Hol4");
 		releases.sort(Comparator.comparing(GithubRelease::getCreatedAt));
 		issuesInPeriod.sort(Comparator.comparing(GithubIssue::getLastCommitDate));
 		int index = 1;
+		System.out.println("Hol5");
 		for(GithubIssue issue:issuesInPeriod){
 			while(issue.getLastCommitDate().getTime() > releases.get(index).getCreatedAt().getTime()){
 				index++;
@@ -332,7 +375,7 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub incidents which last commit was made between two given dates (that usually correspond to two consecutive releases) (maximun of 1000 issues)
 	 */
-	private List<GithubIssue> getGithubIncidentsCommitedInPeriod(Date sinceRelease, Date untilRelease) {
+	private List<GithubIssue> getGithubIncidentsCommitedInPeriod(Date sinceRelease, Date untilRelease, String owner, String repository) {
 		
 		int page = 1;
 		int per_page = 100;
@@ -346,12 +389,14 @@ public class GitHubService implements IGitHubService {
 		untilString = simpleDateFormat.format(untilRelease);
 		
 		String query = "repo:"+owner+"/"+repository+" is:issue created:<"+untilString+" updated:>"+sinceString+" sort:created-asc";
-		if(!bugLabel.equals("\"\"")){
+		if(!bugLabel.equals("")){
 			query = "label:"+bugLabel+" "+query;
 		}
-		if(!bugTitle.equals("\"\"")){
+		if(!bugTitle.equals("")){
 			query = bugTitle+" in:title "+query;
 		}
+
+		System.out.println("query: "+query);
 
 		GithubIssueResult result = this.githubRestService.getGithubIssues(query, page, per_page);
 
@@ -360,11 +405,13 @@ public class GitHubService implements IGitHubService {
 		Date eventCreatedAt = new Date();
 		String createdSince = "";
 
-		Integer divider = this.getDivider(sinceString, untilString);
+		Integer divider = this.getDivider(sinceString, untilString, owner, repository);
 
 		while(result.getTotalCount() != 0){
 
 			result = this.githubRestService.getGithubIssues(query, page, per_page);
+			System.out.println("result: "+result.getTotalCount());
+
 			List<GithubIssue> filteredIssues = new ArrayList<>();
 			if(divider > 1){
 				for(int i = 0; i < result.getItems().size(); i++){
@@ -375,29 +422,35 @@ public class GitHubService implements IGitHubService {
 			}else{
 				filteredIssues = result.getItems();
 			}
+			System.out.println("filteredIssues: "+filteredIssues);
+
 
 			//SI EL DE LAS ISSUES FUNCIONA, CORREGIR ESTE Y PONERLO IGUAL //////////////////////
 			for(GithubIssue issue:filteredIssues){
 
 				events = this.githubRestService.getGithubIssuesEvents(owner, repository, issue.getNumber());
 				events = events.stream().filter(e -> e.getEvent().equals("referenced") && ((e.getCreatedAt().getTime() < untilRelease.getTime()) && (e.getCreatedAt().getTime() > sinceRelease.getTime()))).sorted(Comparator.comparing(GithubIssueEvent::getCreatedAt)).collect(Collectors.toList());
+				System.out.println("events: "+events);
 				if(events.size() > 0){
 					eventCreatedAt = events.get(events.size() - 1).getCreatedAt();
 					issue.setLastCommitDate(eventCreatedAt);
 					issues.add(issue);
-				}
-			}
+					System.out.println("ha entrado esta issue");
 
-			createdSince = simpleDateFormat.format(result.getItems().get(result.getItems().size() - 1).getCreatedAt());
+				}
+			}	
+
+			createdSince = simpleDateFormat.format(DateUtils.addSeconds(result.getItems().get(result.getItems().size() - 1).getCreatedAt(), 1));
 			query = "repo:"+owner+"/"+repository+" is:issue created:"+createdSince+".."+untilString+" updated:>"+sinceString+" sort:created-asc";
-			if(!bugLabel.equals("\"\"")){
+			if(!bugLabel.equals("")){
 				query = "label:"+bugLabel+" "+query;
 			}
-			if(!bugTitle.equals("\"\"")){
+			if(!bugTitle.equals("")){
 				query = bugTitle+" in:title "+query;
 			}
 
 			result = this.githubRestService.getGithubIssues(query, page, per_page);
+			System.out.println("query: "+query);
 
 		}
 
@@ -410,11 +463,11 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub time to restore service (there should be at least one release created before the first created one of the releases included in the period)
 	 */
-	public List<Long> getGithubTimeToRestoreService() { 
+	public List<Long> getGithubTimeToRestoreService(String owner, String repository) { 
 		int page = 1;
 		int per_page = 100;
 
-		List<GithubRelease> releases = this.getGithubReleases();
+		List<GithubRelease> releases = this.getGithubReleases(owner, repository);
 		releases = releases.stream().sorted(Comparator.comparing(GithubRelease::getCreatedAt).reversed()).collect(Collectors.toList());
 		GithubRelease lastRelease = releases.get(releases.size() - 1);
 		GithubRelease firstRelease = releases.get(0);
@@ -424,7 +477,7 @@ public class GitHubService implements IGitHubService {
 		Timestamp sinceRelease = new Timestamp(lastRelease.getCreatedAt().getTime());
 		Timestamp untilRelease = new Timestamp(firstRelease.getCreatedAt().getTime());
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+00:00'");
-		releases.addAll(this.getGithubReleasesCreated(format.format(sinceRelease), format.format(untilRelease)));
+		releases.addAll(this.getGithubReleasesCreated(format.format(sinceRelease), format.format(untilRelease), owner, repository));
 		releases = releases.stream().sorted(Comparator.comparing(GithubRelease::getCreatedAt).reversed()).collect(Collectors.toList());
 
 		// We include the first release created before the first one created of the ones included in the period (we include a release not published in the period, but created before the first created one in the period, to know since when commited issues have to be included in the first release (last one as the list starts with the most recently created releases))
@@ -442,7 +495,7 @@ public class GitHubService implements IGitHubService {
 
 		List<Long> timeToRestoreService = new ArrayList<>();;
 		List<GithubIssue> issuesInPeriod = new ArrayList<>();
-		issuesInPeriod = this.getGithubIncidentsCommitedInPeriod(releases.get(releases.size() - 1).getCreatedAt(), releases.get(0).getCreatedAt());
+		issuesInPeriod = this.getGithubIncidentsCommitedInPeriod(releases.get(releases.size() - 1).getCreatedAt(), releases.get(0).getCreatedAt(), owner, repository);
 		releases.sort(Comparator.comparing(GithubRelease::getCreatedAt));
 		issuesInPeriod.sort(Comparator.comparing(GithubIssue::getLastCommitDate));
 
@@ -462,15 +515,15 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub change failure rate
 	 */
-	public Double getGithubChangeFailureRate() {
+	public Double getGithubChangeFailureRate(String owner, String repository) {
 		int page = 1;
 		int per_page = 100;
 
 		String queryIncidents = "repo:"+owner+"/"+repository+" is:issue created:"+sinceDay+".."+untilDay+" sort:created-asc";
-		if(!bugLabel.equals("\"\"")){
+		if(!bugLabel.equals("")){
 			queryIncidents = "label:"+bugLabel+" "+queryIncidents;
 		}
-		if(!bugTitle.equals("\"\"")){
+		if(!bugTitle.equals("")){
 			queryIncidents = bugTitle+" in:title "+queryIncidents;
 		}
 

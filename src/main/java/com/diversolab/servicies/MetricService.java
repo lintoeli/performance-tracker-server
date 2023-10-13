@@ -1,6 +1,7 @@
 package com.diversolab.servicies;
 
 import java.util.List;
+
 import org.springframework.stereotype.Service;
 import lombok.AllArgsConstructor;
 import reactor.util.function.Tuple2;
@@ -43,9 +44,9 @@ public class MetricService implements IMetricService {
 	 * 
 	 * @return GitHub number of releases
 	 */
-	public Integer calculateGithubNumberOfReleases() {
+	public Integer calculateGithubNumberOfReleases(String owner, String repository) {
 
-		var deployments = this.githubService.getGithubReleases().size();
+		var deployments = this.githubService.getGithubReleases(owner, repository).size();
 
 		return deployments;
 	}
@@ -55,9 +56,9 @@ public class MetricService implements IMetricService {
 	 * 
 	 * @return GitHub Deployment Frequency
 	 */
-	public Tuple2<Double,Double> calculateGithubDeploymentFrequency() {
+	public Tuple2<Double,Double> calculateGithubDeploymentFrequency(String owner, String repository) {
 
-		var deployments = this.githubService.getGithubDeploymentFrequency();
+		var deployments = this.githubService.getGithubDeploymentFrequency(owner, repository);
 
 		return this.calculateMeanAndVariance(deployments);
 	}
@@ -67,9 +68,9 @@ public class MetricService implements IMetricService {
 	 * 
 	 * @return GitHub Lead Time For Changes
 	 */
-	public Tuple2<Double,Double> calculateGithubLeadTimeForChanges() {
+	public Tuple2<Double,Double> calculateGithubLeadTimeForChanges(String owner, String repository) {
 
-		var issues = this.githubService.getGithubLeadTimeForChanges();
+		var issues = this.githubService.getGithubLeadTimeForChanges(owner, repository);
 
 		return this.calculateMeanAndVariance(issues);		
 	}
@@ -79,9 +80,9 @@ public class MetricService implements IMetricService {
 	 * 
 	 * @return GitHub Time To Restore Service
 	 */
-	public Tuple2<Double,Double> calculateGithubTimeToRestoreService() {
+	public Tuple2<Double,Double> calculateGithubTimeToRestoreService(String owner, String repository) {
 
-		var incidents = this.githubService.getGithubTimeToRestoreService();
+		var incidents = this.githubService.getGithubTimeToRestoreService(owner, repository);
 
 		return this.calculateMeanAndVariance(incidents);
 	}
@@ -91,9 +92,9 @@ public class MetricService implements IMetricService {
 	 * 
 	 * @return GitHub Change Failure Rate
 	 */
-	public Double calculateGithubChangeFailureRate() {
+	public Double calculateGithubChangeFailureRate(String owner, String repository) {
 
-		return this.githubService.getGithubChangeFailureRate();
+		return this.githubService.getGithubChangeFailureRate(owner, repository) * 100;
 	}
 
 }
