@@ -17,20 +17,12 @@ public class BenchmarkService {
         return benchmarkRepository.findById(id).orElseThrow(() -> new NoSuchElementException());
     }
 
-    public Benchmark findByName(String name) {
-        return benchmarkRepository.findByName(name).orElseThrow(() -> new NoSuchElementException());
-    }
-
     public List<Benchmark> findAll() {
         return benchmarkRepository.findAll();
     }
 
     public Benchmark save(Benchmark benchmark) {
         return benchmarkRepository.save(benchmark);
-    }
-
-    public boolean existsByName(String name) {
-        return benchmarkRepository.existsByName(name);
     }
     
 }

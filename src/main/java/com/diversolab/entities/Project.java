@@ -12,36 +12,32 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "benchmarks")
-public class Benchmark {
+@Table(name = "projects")
+public class Project {
 
     @Id
-    @SequenceGenerator(name = "benchmarks_id_seq", sequenceName = "benchmarks_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "benchmarks_id_seq")
+    @SequenceGenerator(name = "projects_id_seq", sequenceName = "projects_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "projects_id_seq")
     private Long id;
 
-    @Column(name = "projectName")
+    @Column(name = "title", unique = true)
     @NotNull
-	private String projectName;
+	private String title;
 
-    @Column(name = "period")
+    @Column(name = "name", unique = true)
     @NotNull
-	private String period; //Formato 202X-SY
+	private String name;
 
     @Column(name = "release_frequency")
-    @NotNull
 	private Double releaseFrequency;
 
     @Column(name = "lead_time")
-    @NotNull
 	private Double leadTime;
 
     @Column(name = "time_to_repair")
-    @NotNull
 	private Double timeToRepair;
 
     @Column(name = "bug_issues_rate")
-    @NotNull
 	private Double bugIssuesRate;
-    
+
 }
