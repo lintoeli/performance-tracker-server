@@ -51,7 +51,6 @@ public class ProjectController {
             Project savedProject = projectService.save(project);
             return ResponseEntity.ok(savedProject);
         } catch (Exception e) {
-            // Puedes manejar excepciones específicas si es necesario
             return ResponseEntity.badRequest().build();
         }
     }
