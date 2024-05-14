@@ -373,6 +373,8 @@ public class GitHubService implements IGitHubService {
 	/**
 	 * Returns GitHub incidents which last commit was made between two given dates (that usually correspond to two consecutive releases) (maximun of 1000 issues)
 	 * 
+	 * BUG ISSUES RATE TODO: BUG LABEL, BUG TITLE
+	 * 
 	 * @return GitHub incidents which last commit was made between two given dates (that usually correspond to two consecutive releases) (maximun of 1000 issues)
 	 */
 	private List<GithubIssue> getGithubIncidentsCommitedInPeriod(Date sinceRelease, Date untilRelease, String owner, String repository) {
