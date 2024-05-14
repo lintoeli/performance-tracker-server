@@ -24,6 +24,10 @@ public class BenchmarkService {
     public Benchmark save(Benchmark benchmark) {
         return benchmarkRepository.save(benchmark);
     }
+
+    public List<Benchmark> findByProjectName(String projectName) {
+        return benchmarkRepository.findByProjectName(projectName).orElseThrow(() -> new NoSuchElementException());
+    }
     
 }
 
