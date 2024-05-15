@@ -38,8 +38,5 @@ public class GithubProject {
 
     @Column(name = "bug_issues_rate")
 	private Double bugIssuesRate;
-
-    // @Column(name = "bug_label")
-	// private String bugLabel;
     
 }
