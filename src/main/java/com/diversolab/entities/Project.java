@@ -28,6 +28,10 @@ public class Project {
     @NotNull
 	private String name;
 
+    @Column(name = "address", unique = true)
+    @NotNull
+	private String address;
+
     @Column(name = "release_frequency")
 	private Double releaseFrequency;
 
