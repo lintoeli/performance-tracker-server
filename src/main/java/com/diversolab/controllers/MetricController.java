@@ -21,17 +21,23 @@ public class MetricController {
 
     private final MetricService metricService;
     private final GithubProjectService githubProjectService;
+
+    private final String[] startPeriods = {"2021-01-01T00:00:00+00:00", "2021-07-01T00:00:00+00:00", "2022-01-01T00:00:00+00:00", "2022-07-01T00:00:00+00:00", "2023-01-01T00:00:00+00:00"};
+    private final String[] endPeriods = {"2021-06-30T00:00:00+00:00", "2021-12-31T00:00:00+00:00", "2022-06-30T00:00:00+00:00", "2022-12-31T00:00:00+00:00", "2023-06-30T00:00:00+00:00"};
             
     @CrossOrigin
-    @PostMapping("/{owner}/{repo}/measure")
-    public String measure(@PathVariable String owner, @PathVariable String repo){
+    @PostMapping("/{owner}/{repo}/measure/{period}")
+    public String measure(@PathVariable String owner, @PathVariable String repo, @PathVariable Integer period){
         JSONObject res = new JSONObject();
+        System.out.println("Midiendo " + repo + "...");
         if(githubProjectService.existsByAddress(owner+"/"+repo)){
-
-            Tuple2<Double,Double> releaseFrequencyMetric = this.metricService.calculateGithubDeploymentFrequency(owner, repo);
-            Tuple2<Double,Double> leadTimeForReleasedChangesMetric = this.metricService.calculateGithubLeadTimeForChanges(owner, repo);
-            Tuple2<Double,Double> timeToRepairCodeMetric = this.metricService.calculateGithubTimeToRestoreService(owner, repo);
-            Double bugIssuesRateMetric = this.metricService.calculateGithubChangeFailureRate(owner, repo);
+            String startPeriod = startPeriods[period];
+            String endPeriod = endPeriods[period];
+            System.out.println("Midiendo desde " + startPeriod + " hasta " + endPeriod);
+            Tuple2<Double,Double> releaseFrequencyMetric = this.metricService.calculateGithubDeploymentFrequency(owner, repo, startPeriod, endPeriod);
+            Tuple2<Double,Double> leadTimeForReleasedChangesMetric = this.metricService.calculateGithubLeadTimeForChanges(owner, repo, startPeriod, endPeriod);
+            Tuple2<Double,Double> timeToRepairCodeMetric = this.metricService.calculateGithubTimeToRestoreService(owner, repo, startPeriod, endPeriod);
+            Double bugIssuesRateMetric = this.metricService.calculateGithubChangeFailureRate(owner, repo, startPeriod, endPeriod);
 
             GithubProject githubProject = githubProjectService.findByAddress(owner+"/"+repo);
             githubProject.setReleaseFrequency(releaseFrequencyMetric.getT1());

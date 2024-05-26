@@ -30,8 +30,8 @@ import reactor.netty.http.client.HttpClient;
 @Service
 public class GitHubService implements IGitHubService {
 	
-	private String sinceDay="2023-01-01T00:00:00+00:00";
-	private String untilDay="2023-07-01T00:00:00+00:00";
+	// private String sinceDay="2023-01-01T00:00:00+00:00";
+	// private String untilDay="2023-07-01T00:00:00+00:00";
 	private String bugLabel="type/bug";
 	private String bugTitle="";
 
@@ -120,7 +120,7 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub releases published in given period
 	 */
-	public List<GithubRelease> getGithubReleases(String owner, String repository) {
+	public List<GithubRelease> getGithubReleases(String owner, String repository, String startPeriod, String endPeriod) {
 
 		int page = 1;
 		int per_page = 100;
@@ -128,18 +128,21 @@ public class GitHubService implements IGitHubService {
 		List<GithubRelease> releasesInPeriod = new ArrayList<>();
 		List<GithubRelease> resp = new ArrayList<>();
 
-		Date since = this.getFormattedDate(sinceDay);
-		Date until = this.getFormattedDate(untilDay);
+		Date since = this.getFormattedDate(startPeriod);
+		Date until = this.getFormattedDate(endPeriod);
 		
 		boolean notLastRelease = true;
 		while(notLastRelease){
 
+			System.out.println("Obteniendo releases...");
 			// Deployments in page
 			releases = this.githubRestService.getGithubReleases(owner, repository, page, per_page);
+			System.out.println("Releases obtenidas: " + releases.size());
 
 			// Deployments of the page inside the period
 			releasesInPeriod = releases.stream().filter(release -> release.getPublishedAt().before(until) && release.getPublishedAt().after(since) && !(release.getPrerelease())).collect(Collectors.toList());
 			resp.addAll(releasesInPeriod);
+			System.out.println("Releases añadidas: " + resp);
 
 			// Is there any deployment before the period? (Which means we have finished)
 			releasesInPeriod = releases.stream().filter(deployment -> deployment.getPublishedAt().before(since)).collect(Collectors.toList());
@@ -203,11 +206,11 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub deployment frequency
 	 */
-	public List<Long> getGithubDeploymentFrequency(String owner, String repository) {
+	public List<Long> getGithubDeploymentFrequency(String owner, String repository, String startPeriod, String endPeriod) {
 
 		//System.out.println("SERVICE: "+githubRestService);
 
-		List<GithubRelease> releases = this.getGithubReleases(owner, repository);
+		List<GithubRelease> releases = this.getGithubReleases(owner, repository, startPeriod, endPeriod);
 
 		releases = releases.stream().sorted(Comparator.comparing(GithubRelease::getPublishedAt)).toList();
 
@@ -308,7 +311,7 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub lead time for changes (there should be at least one release created before the first created one of the releases included in the period)
 	 */
-	public List<Long> getGithubLeadTimeForChanges(String owner, String repository) {
+	public List<Long> getGithubLeadTimeForChanges(String owner, String repository, String startPeriod, String endPeriod) {
 		
 		//System.out.println("SERVICE: "+githubRestService.);
 
@@ -317,7 +320,7 @@ public class GitHubService implements IGitHubService {
 		int page = 1;
 		int per_page = 100;
 
-		List<GithubRelease> releases = this.getGithubReleases(owner, repository);
+		List<GithubRelease> releases = this.getGithubReleases(owner, repository, startPeriod, endPeriod);
 		releases = releases.stream().sorted(Comparator.comparing(GithubRelease::getCreatedAt).reversed()).collect(Collectors.toList());
 		GithubRelease lastRelease = releases.get(releases.size() - 1);
 		GithubRelease firstRelease = releases.get(0);
@@ -465,11 +468,11 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub time to restore service (there should be at least one release created before the first created one of the releases included in the period)
 	 */
-	public List<Long> getGithubTimeToRestoreService(String owner, String repository) { 
+	public List<Long> getGithubTimeToRestoreService(String owner, String repository, String startPeriod, String endPeriod) { 
 		int page = 1;
 		int per_page = 100;
 
-		List<GithubRelease> releases = this.getGithubReleases(owner, repository);
+		List<GithubRelease> releases = this.getGithubReleases(owner, repository, startPeriod, endPeriod);
 		releases = releases.stream().sorted(Comparator.comparing(GithubRelease::getCreatedAt).reversed()).collect(Collectors.toList());
 		GithubRelease lastRelease = releases.get(releases.size() - 1);
 		GithubRelease firstRelease = releases.get(0);
@@ -517,11 +520,11 @@ public class GitHubService implements IGitHubService {
 	 * 
 	 * @return GitHub change failure rate
 	 */
-	public Double getGithubChangeFailureRate(String owner, String repository) {
+	public Double getGithubChangeFailureRate(String owner, String repository, String startPeriod, String endPeriod) {
 		int page = 1;
 		int per_page = 100;
 
-		String queryIncidents = "repo:"+owner+"/"+repository+" is:issue created:"+sinceDay+".."+untilDay+" sort:created-asc";
+		String queryIncidents = "repo:"+owner+"/"+repository+" is:issue created:"+startPeriod+".."+endPeriod+" sort:created-asc";
 		if(!bugLabel.equals("")){
 			queryIncidents = "label:"+bugLabel+" "+queryIncidents;
 		}
@@ -532,7 +535,7 @@ public class GitHubService implements IGitHubService {
 		GithubIssueResult resultIncidents = this.githubRestService.getGithubIssues(queryIncidents, page, per_page);
 		Double numberOfIncidents = Double.valueOf(resultIncidents.getTotalCount());
 
-		String queryIssues = "repo:"+owner+"/"+repository+" is:issue created:"+sinceDay+".."+untilDay+" sort:created-asc";
+		String queryIssues = "repo:"+owner+"/"+repository+" is:issue created:"+startPeriod+".."+endPeriod+" sort:created-asc";
 		GithubIssueResult resultIssues = this.githubRestService.getGithubIssues(queryIssues, page, per_page);
 		Double numberOfIssues = Double.valueOf(resultIssues.getTotalCount());
 
