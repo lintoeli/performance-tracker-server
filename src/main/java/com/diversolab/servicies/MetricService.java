@@ -44,9 +44,9 @@ public class MetricService implements IMetricService {
 	 * 
 	 * @return GitHub number of releases
 	 */
-	public Integer calculateGithubNumberOfReleases(String owner, String repository) {
+	public Integer calculateGithubNumberOfReleases(String owner, String repository,  String startPeriod, String endPeriod) {
 
-		var deployments = this.githubService.getGithubReleases(owner, repository).size();
+		var deployments = this.githubService.getGithubReleases(owner, repository, startPeriod, endPeriod).size();
 
 		return deployments;
 	}
@@ -56,9 +56,9 @@ public class MetricService implements IMetricService {
 	 * 
 	 * @return GitHub Deployment Frequency
 	 */
-	public Tuple2<Double,Double> calculateGithubDeploymentFrequency(String owner, String repository) {
+	public Tuple2<Double,Double> calculateGithubDeploymentFrequency(String owner, String repository, String startPeriod, String endPeriod) {
 
-		var deployments = this.githubService.getGithubDeploymentFrequency(owner, repository);
+		var deployments = this.githubService.getGithubDeploymentFrequency(owner, repository, startPeriod, endPeriod);
 
 		return this.calculateMeanAndVariance(deployments);
 	}
@@ -68,9 +68,9 @@ public class MetricService implements IMetricService {
 	 * 
 	 * @return GitHub Lead Time For Changes
 	 */
-	public Tuple2<Double,Double> calculateGithubLeadTimeForChanges(String owner, String repository) {
+	public Tuple2<Double,Double> calculateGithubLeadTimeForChanges(String owner, String repository, String startPeriod, String endPeriod) {
 
-		var issues = this.githubService.getGithubLeadTimeForChanges(owner, repository);
+		var issues = this.githubService.getGithubLeadTimeForChanges(owner, repository, startPeriod, endPeriod);
 
 		return this.calculateMeanAndVariance(issues);		
 	}
@@ -80,9 +80,9 @@ public class MetricService implements IMetricService {
 	 * 
 	 * @return GitHub Time To Restore Service
 	 */
-	public Tuple2<Double,Double> calculateGithubTimeToRestoreService(String owner, String repository) {
+	public Tuple2<Double,Double> calculateGithubTimeToRestoreService(String owner, String repository, String startPeriod, String endPeriod) {
 
-		var incidents = this.githubService.getGithubTimeToRestoreService(owner, repository);
+		var incidents = this.githubService.getGithubTimeToRestoreService(owner, repository, startPeriod, endPeriod);
 
 		return this.calculateMeanAndVariance(incidents);
 	}
@@ -92,9 +92,9 @@ public class MetricService implements IMetricService {
 	 * 
 	 * @return GitHub Change Failure Rate
 	 */
-	public Double calculateGithubChangeFailureRate(String owner, String repository) {
+	public Double calculateGithubChangeFailureRate(String owner, String repository, String startPeriod, String endPeriod) {
 
-		return this.githubService.getGithubChangeFailureRate(owner, repository) * 100;
+		return this.githubService.getGithubChangeFailureRate(owner, repository, startPeriod, endPeriod) * 100;
 	}
 
 }
