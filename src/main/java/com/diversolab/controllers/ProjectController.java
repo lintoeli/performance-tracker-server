@@ -54,4 +54,10 @@ public class ProjectController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @CrossOrigin
+    @PostMapping("/load-from-database")
+    public void loadProjectFromDatabase() {
+        this.projectService.loadFromDatabase();
+    }
 }

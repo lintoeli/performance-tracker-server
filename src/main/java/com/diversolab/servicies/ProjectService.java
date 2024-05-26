@@ -5,6 +5,7 @@ import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
 
+import com.diversolab.entities.GithubProject;
 import com.diversolab.entities.Project;
 import com.diversolab.repositories.ProjectRepository;
 
@@ -15,6 +16,7 @@ import lombok.AllArgsConstructor;
 public class ProjectService {
     
     private final ProjectRepository projectRepository;
+    private final GithubProjectService githubProjectService;
 
     public Project findById(String id){
         return this.projectRepository.findById(id).orElseThrow(() -> new NoSuchElementException());
@@ -30,5 +32,32 @@ public class ProjectService {
 
     public Project save(Project project) {
         return this.projectRepository.save(project);
+    }
+
+    public void loadFromDatabase(){
+        // Recuperamos los proyectos de la tabla GitHubProjects
+        List<GithubProject> GHProjects = this.githubProjectService.findAll();
+        // Recorremos los proyectos de GitHub
+        for (GithubProject p : GHProjects) {
+            Project project = new Project();
+            // Info del proyecto:
+            project.setTitle(p.getName());
+            project.setAddress(p.getAddress());
+            project.setName(p.getName().toLowerCase().replace(" ", ""));
+
+            // Metricas de prueba:
+            project.setBugIssuesRate(p.getBugIssuesRate());
+            project.setLeadTime(p.getLeadTimeForReleasedChanges());
+            project.setReleaseFrequency(p.getReleaseFrequency());
+            project.setTimeToRepair(p.getTimeToRepairCode());
+
+            // Guardamos el proyecto en la BBDD:
+            try{
+                this.save(project);
+            }catch(Exception e){
+                System.out.println("Error al guardar el proyecto: " + project.getName());
+            }
+            
+        }
     }
 }
