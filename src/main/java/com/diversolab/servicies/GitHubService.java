@@ -142,7 +142,7 @@ public class GitHubService implements IGitHubService {
 			// Deployments of the page inside the period
 			releasesInPeriod = releases.stream().filter(release -> release.getPublishedAt().before(until) && release.getPublishedAt().after(since) && !(release.getPrerelease())).collect(Collectors.toList());
 			resp.addAll(releasesInPeriod);
-			System.out.println("Releases añadidas: " + resp);
+			System.out.println("Releases añadidas: " + resp.size());
 
 			// Is there any deployment before the period? (Which means we have finished)
 			releasesInPeriod = releases.stream().filter(deployment -> deployment.getPublishedAt().before(since)).collect(Collectors.toList());
@@ -153,7 +153,7 @@ public class GitHubService implements IGitHubService {
 
 			page++;
 		}
-
+		System.out.println("Va a devolver las releases...");
 		return resp;
 
 	}
@@ -196,7 +196,7 @@ public class GitHubService implements IGitHubService {
 		}
 
 		System.out.println("RELEASES SIZE: "+resp.size());
-		System.out.println("RELEASES: "+resp);
+		// System.out.println("RELEASES: "+resp);
 		return resp;
 
 	}

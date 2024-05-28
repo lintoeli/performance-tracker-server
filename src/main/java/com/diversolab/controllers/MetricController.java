@@ -34,34 +34,44 @@ public class MetricController {
             String startPeriod = startPeriods[period];
             String endPeriod = endPeriods[period];
             System.out.println("Midiendo desde " + startPeriod + " hasta " + endPeriod);
-            Tuple2<Double,Double> releaseFrequencyMetric = this.metricService.calculateGithubDeploymentFrequency(owner, repo, startPeriod, endPeriod);
-            Tuple2<Double,Double> leadTimeForReleasedChangesMetric = this.metricService.calculateGithubLeadTimeForChanges(owner, repo, startPeriod, endPeriod);
-            Tuple2<Double,Double> timeToRepairCodeMetric = this.metricService.calculateGithubTimeToRestoreService(owner, repo, startPeriod, endPeriod);
-            Double bugIssuesRateMetric = this.metricService.calculateGithubChangeFailureRate(owner, repo, startPeriod, endPeriod);
+            try{
+                Tuple2<Double,Double> releaseFrequencyMetric = this.metricService.calculateGithubDeploymentFrequency(owner, repo, startPeriod, endPeriod);
+                System.out.println("Release frequency: " + releaseFrequencyMetric.getT1());
+                Tuple2<Double,Double> leadTimeForReleasedChangesMetric = this.metricService.calculateGithubLeadTimeForChanges(owner, repo, startPeriod, endPeriod);
+                Tuple2<Double,Double> timeToRepairCodeMetric = this.metricService.calculateGithubTimeToRestoreService(owner, repo, startPeriod, endPeriod);
+                Double bugIssuesRateMetric = this.metricService.calculateGithubChangeFailureRate(owner, repo, startPeriod, endPeriod);
 
-            GithubProject githubProject = githubProjectService.findByAddress(owner+"/"+repo);
-            githubProject.setReleaseFrequency(releaseFrequencyMetric.getT1());
-            githubProject.setLeadTimeForReleasedChanges(leadTimeForReleasedChangesMetric.getT1());
-            githubProject.setTimeToRepairCode(timeToRepairCodeMetric.getT1());
-            githubProject.setBugIssuesRate(bugIssuesRateMetric);
+                GithubProject githubProject = githubProjectService.findByAddress(owner+"/"+repo);
+                githubProject.setReleaseFrequency(releaseFrequencyMetric.getT1());
+                githubProject.setLeadTimeForReleasedChanges(leadTimeForReleasedChangesMetric.getT1());
+                githubProject.setTimeToRepairCode(timeToRepairCodeMetric.getT1());
+                githubProject.setBugIssuesRate(bugIssuesRateMetric);
 
-            System.out.println(githubProject);
-            System.out.println("releaseFrequencySD: "+releaseFrequencyMetric.getT2());
-            System.out.println("leadTimeForReleasedChangesSD: "+leadTimeForReleasedChangesMetric.getT2());
-            System.out.println("timeToRepairCodeSD: "+timeToRepairCodeMetric.getT2());
+                System.out.println(githubProject);
+                System.out.println("releaseFrequencySD: "+releaseFrequencyMetric.getT2());
+                System.out.println("leadTimeForReleasedChangesSD: "+leadTimeForReleasedChangesMetric.getT2());
+                System.out.println("timeToRepairCodeSD: "+timeToRepairCodeMetric.getT2());
 
-            res.put("releaseFrequency", githubProject.getReleaseFrequency());
-            res.put("leadTimeForReleasedChanges", githubProject.getLeadTimeForReleasedChanges());
-            res.put("timeToRepairCode", githubProject.getTimeToRepairCode());
-            res.put("bugIssuesRate", githubProject.getBugIssuesRate());
-            res.put("completed", true);
+                res.put("releaseFrequency", githubProject.getReleaseFrequency());
+                res.put("leadTimeForReleasedChanges", githubProject.getLeadTimeForReleasedChanges());
+                res.put("timeToRepairCode", githubProject.getTimeToRepairCode());
+                res.put("bugIssuesRate", githubProject.getBugIssuesRate());
+                res.put("completed", true);
 
 
-            this.githubProjectService.save(githubProject);
+                this.githubProjectService.save(githubProject);
+            }catch(Exception e){
+                System.out.println("Error: no se ha podido medir " + repo + "/" + owner);
+                res.put("completed", false);
+                res.put("error", "Error: no se ha podido medir " + repo + "/" + owner);
+                System.err.println(e);
+            }
+            
 
 
         } else {
             res.put("completed", false);
+            res.put("error", "Error: no se ha podido medir " + repo + "/" + owner);
         }
 
         return res.toString();
