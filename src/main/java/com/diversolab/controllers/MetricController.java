@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.diversolab.entities.GithubProject;
+import com.diversolab.servicies.GitHubReleasesService;
 import com.diversolab.servicies.GithubProjectService;
 import com.diversolab.servicies.MetricService;
 
@@ -23,7 +24,7 @@ public class MetricController {
     private final GithubProjectService githubProjectService;
 
     private final String[] startPeriods = {"2021-01-01T00:00:00+00:00", "2021-07-01T00:00:00+00:00", "2022-01-01T00:00:00+00:00", "2022-07-01T00:00:00+00:00", "2023-01-01T00:00:00+00:00"};
-    private final String[] endPeriods = {"2021-06-30T00:00:00+00:00", "2021-12-31T00:00:00+00:00", "2022-06-30T00:00:00+00:00", "2022-12-31T00:00:00+00:00", "2023-06-30T00:00:00+00:00"};
+    private final String[] endPeriods = {"2021-04-30T00:00:00+00:00", "2021-12-31T00:00:00+00:00", "2022-06-30T00:00:00+00:00", "2022-12-31T00:00:00+00:00", "2023-06-30T00:00:00+00:00"};
             
     @CrossOrigin
     @PostMapping("/{owner}/{repo}/measure/{period}")
@@ -34,7 +35,7 @@ public class MetricController {
             String startPeriod = startPeriods[period];
             String endPeriod = endPeriods[period];
             System.out.println("Midiendo desde " + startPeriod + " hasta " + endPeriod);
-            try{
+            // try{
                 Tuple2<Double,Double> releaseFrequencyMetric = this.metricService.calculateGithubDeploymentFrequency(owner, repo, startPeriod, endPeriod);
                 System.out.println("Release frequency: " + releaseFrequencyMetric.getT1());
                 Tuple2<Double,Double> leadTimeForReleasedChangesMetric = this.metricService.calculateGithubLeadTimeForChanges(owner, repo, startPeriod, endPeriod);
@@ -60,15 +61,13 @@ public class MetricController {
 
 
                 this.githubProjectService.save(githubProject);
-            }catch(Exception e){
-                System.out.println("Error: no se ha podido medir " + repo + "/" + owner);
-                res.put("completed", false);
-                res.put("error", "Error: no se ha podido medir " + repo + "/" + owner);
-                System.err.println(e);
-            }
+            // }catch(Exception e){
+            //     System.out.println("Error: no se ha podido medir " + repo + "/" + owner);
+            //     res.put("completed", false);
+            //     res.put("error", "Error: no se ha podido medir " + repo + "/" + owner);
+            //     System.err.println(e.getMessage());
+            //}
             
-
-
         } else {
             res.put("completed", false);
             res.put("error", "Error: no se ha podido medir " + repo + "/" + owner);

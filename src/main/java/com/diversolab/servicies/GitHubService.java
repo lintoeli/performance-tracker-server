@@ -37,6 +37,8 @@ public class GitHubService implements IGitHubService {
 
 	private String user = "";
 	private String password = "";
+
+	private final GitHubReleasesService gitHubReleasesService = null;
 	// private MultiValueMap<String, String> mvmap = new LinkedMultiValueMap<String,String>(){
 	// 	{
 	// 		add("Authorization", Base64.getEncoder().encodeToString(String.format("%s:%s", user, password).getBytes()));
@@ -106,10 +108,12 @@ public class GitHubService implements IGitHubService {
 		Integer divider = 1;
 		//We sum the total number of issues plus the total number divided by 100 (because each query returns a page with 100 results, so we will need to make that many queries)
 		Long approxNumberOfQueries = totalIncidentsAndIssues + (totalIncidentsAndIssues/100);
+		System.out.println("Peticiones aproximadas: " + approxNumberOfQueries);
 		if(approxNumberOfQueries > 5000){
 			approxNumberOfQueries = approxNumberOfQueries/5000;
 			//We add one to get 1 more if the approxNumberOfQueries is not an exact number
 			divider = Integer.valueOf(approxNumberOfQueries.intValue() + 1);
+			System.out.println("Divider: " + divider);
 		}
 
 		return divider;
@@ -132,7 +136,7 @@ public class GitHubService implements IGitHubService {
 		Date until = this.getFormattedDate(endPeriod);
 		
 		boolean notLastRelease = true;
-		while(notLastRelease){
+		while(notLastRelease){ 
 
 			System.out.println("Obteniendo releases...");
 			// Deployments in page
@@ -150,7 +154,10 @@ public class GitHubService implements IGitHubService {
 				notLastRelease = false;
 				break;
 			}
-
+			// Github no permite mas de 1000 resultados
+			if (page == 10) {
+				break;
+			}
 			page++;
 		}
 		System.out.println("Va a devolver las releases...");
