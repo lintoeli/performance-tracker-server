@@ -14,6 +14,10 @@ import lombok.AllArgsConstructor;
 public class GitHubReleasesService {
     private final GitHubReleasesRepository gitHubReleasesRepository;
 
+    public List<GithubRelease> findAll(){
+        return gitHubReleasesRepository.findAll();
+    }
+    
     public void saveAll(List<GithubRelease> releases){
         this.gitHubReleasesRepository.saveAll(releases);
     }

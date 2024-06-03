@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 @Repository
 public interface BugTagsRepository extends JpaRepository<BugTags, String>{
-    Optional<BugTags> findByProjectName(String name);
+    Optional<BugTags> findByAddress(String name);
 }

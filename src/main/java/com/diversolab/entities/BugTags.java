@@ -20,9 +20,9 @@ public class BugTags {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bugTags_id_seq")
     private Long id;
 
-    @Column(name = "projectName", unique = true)
+    @Column(name = "address", unique = true)
     @NotNull
-	private String projectName;
+	private String address;
 
     @Column(name = "bugLabel")
 	private String bugLabel; 

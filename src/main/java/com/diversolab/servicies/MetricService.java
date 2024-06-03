@@ -3,6 +3,9 @@ package com.diversolab.servicies;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+
+import com.diversolab.entities.github.GithubRelease;
+
 import lombok.AllArgsConstructor;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -95,6 +98,10 @@ public class MetricService implements IMetricService {
 	public Double calculateGithubChangeFailureRate(String owner, String repository, String startPeriod, String endPeriod) {
 
 		return this.githubService.getGithubChangeFailureRate(owner, repository, startPeriod, endPeriod) * 100;
+	}
+
+	public List<GithubRelease> getGithubReleases(String owner, String repository, String startPeriod, String endPeriod){
+		return this.githubService.getGithubReleases(owner, repository, startPeriod, endPeriod);
 	}
 
 }
