@@ -44,4 +44,24 @@ public class Project {
     @Column(name = "bug_issues_rate")
 	private Double bugIssuesRate;
 
+    public Double returnMetric(String metric){
+
+        switch (metric) {
+            case "releaseFrequency":
+                return this.getReleaseFrequency();
+
+            case "leadTime":
+                return this.getLeadTime();
+
+            case "timeToRepair":
+                return this.getTimeToRepair();
+
+            case "bugIssuesRate":
+                return this.getBugIssuesRate();
+        
+            default:
+                return -1.0;
+        }
+    }
+
 }
