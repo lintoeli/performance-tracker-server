@@ -30,8 +30,17 @@ public class ProjectService {
         return this.projectRepository.findByName(name).orElseThrow(() -> new NoSuchElementException());
     }
 
+    public Project findByAddress(String name){
+        return this.projectRepository.findByAddress(name).orElseThrow(() -> new NoSuchElementException());
+    }
+
     public Project save(Project project) {
         return this.projectRepository.save(project);
+    }
+
+    public boolean existsByAddress(String address){
+        Project project = this.projectRepository.findByAddress(address).orElseThrow(() -> new NoSuchElementException());
+        return project != null;
     }
 
     public void loadFromDatabase(){

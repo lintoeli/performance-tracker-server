@@ -542,7 +542,11 @@ public class GitHubService implements IGitHubService {
 
 		releasesList = releasesList.stream().filter(release -> release.getCreatedAt().getTime() < lastRelease.getCreatedAt().getTime() && (!(release.getPrerelease()))).collect(Collectors.toList());
 		releasesList = releasesList.stream().sorted(Comparator.comparing(GithubRelease::getCreatedAt).reversed()).collect(Collectors.toList());
-		releases.add(releasesList.get(0));
+		try{
+			releases.add(releasesList.get(0));
+		}catch(Exception e){
+			System.out.println("No releases created before the first created one of the releases included in the period");
+		}
 
 		List<Long> timeToRestoreService = new ArrayList<>();;
 		List<GithubIssue> issuesInPeriod = new ArrayList<>();

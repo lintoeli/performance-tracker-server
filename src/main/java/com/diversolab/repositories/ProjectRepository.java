@@ -9,5 +9,6 @@ import com.diversolab.entities.Project;
 public interface ProjectRepository extends JpaRepository<Project, String>{
 
     Optional<Project> findByName(String name);
+    Optional<Project> findByAddress(String address);
     
 }
