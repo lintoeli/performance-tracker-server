@@ -19,7 +19,6 @@ public class ColorRangeService {
     private final ColorRangeRepository colorRangeRepository;
     private final ProjectService projectService;
 
-    private String[] metrics = {"releaseFrequency", "leadTime", "timeToRepair", "bugIssuesRate"};
 
     public List<ColorRange> findAll(){
         return this.colorRangeRepository.findAll();
@@ -44,13 +43,23 @@ public class ColorRangeService {
         return colorRangeRepository.save(newColorRange);
     }
 
-    public void defineRanges() {
+    public void deleteAll(){
         this.colorRangeRepository.deleteAll();
-        List<Project> projects = projectService.findAll();
+    }
 
-        for (String metric : metrics) { // Asumiendo que 'metrics' es una lista de strings
+    public void defineRanges() {
+        this.deleteAll();
+        System.out.println("ColorRanges borrados");
+        List<Project> projects = this.projectService.findAll();
+
+        System.out.println(projects);
+        String[] metrics = {"releaseFrequency", "leadTime", "timeToRepair", "bugIssuesRate"};
+        System.out.println(metrics);
+
+        for (String metric : metrics) {
+            System.out.println("Métrica: " + metric);
             List<Double> values = projects.stream()
-                                          .map(project -> project.returnMetric(metric)) // Asumiendo que Project tiene un método para obtener valores por métrica
+                                          .map(project -> project.returnMetric(metric))
                                           .mapToDouble(Double::doubleValue)
                                           .boxed()
                                           .collect(Collectors.toList());
@@ -62,16 +71,17 @@ public class ColorRangeService {
 
             ColorRange range = new ColorRange();
             range.setMetric(metric);
-            range.setGreen(formatRange(values.get(highPercentileIndex) + 0.01, Collections.max(values)));
+            range.setRed(formatRange(values.get(highPercentileIndex) + 0.01, Collections.max(values)));
             range.setYellow(formatRange(values.get(lowPercentileIndex) + 0.01, values.get(highPercentileIndex)));
-            range.setRed(formatRange(Collections.min(values), values.get(lowPercentileIndex)));
+            range.setGreen(formatRange(Collections.min(values), values.get(lowPercentileIndex)));
 
+            System.out.println("ColorRange: " + range);
             this.colorRangeRepository.save(range);
         }
     }
 
     private String formatRange(double start, double end) {
-        return String.format("{start: %f, end: %f}", start, end);
+        return String.format("%f, %f", start, end);
     }
     
 }

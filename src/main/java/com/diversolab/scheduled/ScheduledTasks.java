@@ -46,6 +46,7 @@ public class ScheduledTasks {
 
     /**
      * Función para automatizar el cálculo de métricas de forma semestral
+     * Descomentar el @Scheduled para que funcione automáticamente si el backend está arrancado
      */
     //@Scheduled(cron = "0 0 0 1 1,7 *")
     public void updateColorRangesAndProjects() {
@@ -101,10 +102,21 @@ public class ScheduledTasks {
 
             this.benchmarkService.save(benchmark);
             System.out.println("Benchmark del proyecto " + project.getName() + " creado"); // LOG
+
+            try {
+                System.out.println("Esperando 50 minutos para medir el siguiente periodo");
+                // Thread.sleep(3600000); // Esperar 1 hora (3600000 ms)
+                Thread.sleep(3000000); // Esperar 50 min
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
         // Paso 4: Recalculamos los ColorRanges una vez actualizados los proyectos
 
-        //this.colorRangeService.updateRanges()
+        this.colorRangeService.defineRanges();
+        System.out.println("=================================================================================");
+        System.out.println("TODAS LAS OPERACIONES COMPLETADAS");
+        System.out.println("=================================================================================");
 
     }
 

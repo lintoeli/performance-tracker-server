@@ -55,6 +55,11 @@ public class ProjectController {
         }
     }
 
+    /**
+     * MÉTODO DE MIGRACIÓN DE DATOS
+     * 
+     * NO VOLVER A UTILIZAR
+     */
     @CrossOrigin
     @PostMapping("/load-from-database")
     public void loadProjectFromDatabase() {

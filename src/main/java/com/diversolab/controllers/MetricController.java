@@ -15,6 +15,7 @@ import com.diversolab.entities.Project;
 import com.diversolab.entities.github.GithubRelease;
 import com.diversolab.servicies.BenchmarkService;
 import com.diversolab.servicies.BugTagsService;
+import com.diversolab.servicies.ColorRangeService;
 import com.diversolab.servicies.GitHubReleasesService;
 import com.diversolab.servicies.MetricService;
 import com.diversolab.servicies.ProjectService;
@@ -32,6 +33,7 @@ public class MetricController {
     private final BugTagsService bugTagsService;
     private final ProjectService projectService;
     private final BenchmarkService benchmarkService;
+    private final ColorRangeService colorRangeService;
 
     private final String[] startPeriods = {"2021-01-01T00:00:00+00:00", "2021-07-01T00:00:00+00:00", "2022-01-01T00:00:00+00:00", "2022-07-01T00:00:00+00:00", "2023-01-01T00:00:00+00:00"};
     private final String[] endPeriods = {"2021-07-01T00:00:00+00:00", "2022-01-01T00:00:00+00:00", "2022-07-01T00:00:00+00:00", "2023-01-01T00:00:00+00:00", "2023-07-01T00:00:00+00:00"};
@@ -51,56 +53,87 @@ public class MetricController {
             try{
                 // Sacamos releases
                 List<GithubRelease> releases = this.metricService.getGithubReleases(owner, repo, startPeriod, endPeriod);
+                if (releases.size() == 0){
+                    // Limpiamos tabla de releases
+                    this.gitHubReleasesService.deleteAll();
 
-                //Obtenemos métricas
-                Tuple2<Double,Double> releaseFrequencyMetric = this.metricService.calculateGithubDeploymentFrequency(owner, repo, startPeriod, endPeriod);
-                System.out.println("Release frequency: " + releaseFrequencyMetric.getT1());
-                Tuple2<Double,Double> leadTimeForReleasedChangesMetric = this.metricService.calculateGithubLeadTimeForChanges(owner, repo, startPeriod, endPeriod);
-                System.out.println("Lead time: " + leadTimeForReleasedChangesMetric.getT1());
-                Tuple2<Double,Double> timeToRepairCodeMetric = this.metricService.calculateGithubTimeToRestoreService(owner, repo, startPeriod, endPeriod);
-                System.out.println("Time to repair: " + timeToRepairCodeMetric.getT1());
-                Double bugIssuesRateMetric = this.metricService.calculateGithubChangeFailureRate(owner, repo, startPeriod, endPeriod);
-                System.out.println("Bug issues rate: " + bugIssuesRateMetric);
+                    // Actualizamos proyecto
+                    Project project = projectService.findByAddress(owner+"/"+repo);
+                    project.setReleaseFrequency(0.0);
+                    project.setLeadTime(0.0);
+                    project.setTimeToRepair(0.0);
+                    project.setBugIssuesRate(0.0);
+                    this.projectService.save(project);
 
-                // Limpiamos tabla de releases
-                this.gitHubReleasesService.deleteAll();
+                    // Creamos benchmark
+                    Benchmark benchmark = new Benchmark();
+                    benchmark.setPeriod(periods[period]);
+                    benchmark.setProjectName(project.getName());
+                    benchmark.setReleaseFrequency(project.getReleaseFrequency());
+                    benchmark.setLeadTime(project.getLeadTime());
+                    benchmark.setTimeToRepair(project.getTimeToRepair());
+                    benchmark.setBugIssuesRate(project.getBugIssuesRate());
+                    this.benchmarkService.save(benchmark);
 
-                // Actualizamos proyectos
-                Project project = projectService.findByAddress(owner+"/"+repo);
-                project.setReleaseFrequency(releaseFrequencyMetric.getT1());
-                project.setLeadTime(leadTimeForReleasedChangesMetric.getT1());
-                project.setTimeToRepair(timeToRepairCodeMetric.getT1());
-                project.setBugIssuesRate(bugIssuesRateMetric);
-                this.projectService.save(project);
+                    System.out.println("No se lanzaron releases en el periodo " + periods[period]);
+                    res.put("period", periods[period]);
+                    res.put("emptyReleases", true);
 
-                // Creamos benchmark
-                Benchmark benchmark = new Benchmark();
-                benchmark.setPeriod(periods[period]);
-                benchmark.setProjectName(project.getName());
-                benchmark.setReleaseFrequency(project.getReleaseFrequency());
-                benchmark.setLeadTime(project.getLeadTime());
-                benchmark.setTimeToRepair(project.getTimeToRepair());
-                benchmark.setBugIssuesRate(project.getBugIssuesRate());
-                this.benchmarkService.save(benchmark);
+                } else{
+                    //Obtenemos métricas
+                    Tuple2<Double,Double> releaseFrequencyMetric = this.metricService.calculateGithubDeploymentFrequency(owner, repo, startPeriod, endPeriod);
+                    System.out.println("Release frequency: " + releaseFrequencyMetric.getT1());
+                    Tuple2<Double,Double> leadTimeForReleasedChangesMetric = this.metricService.calculateGithubLeadTimeForChanges(owner, repo, startPeriod, endPeriod);
+                    System.out.println("Lead time: " + leadTimeForReleasedChangesMetric.getT1());
+                    Tuple2<Double,Double> timeToRepairCodeMetric = this.metricService.calculateGithubTimeToRestoreService(owner, repo, startPeriod, endPeriod);
+                    System.out.println("Time to repair: " + timeToRepairCodeMetric.getT1());
+                    Double bugIssuesRateMetric = this.metricService.calculateGithubChangeFailureRate(owner, repo, startPeriod, endPeriod);
+                    System.out.println("Bug issues rate: " + bugIssuesRateMetric);
 
-                // Construimos el res 
-                res.put("releaseFrequency", project.getReleaseFrequency());
-                res.put("leadTimeForReleasedChanges", project.getLeadTime());
-                res.put("timeToRepairCode", project.getTimeToRepair());
-                res.put("bugIssuesRate", project.getBugIssuesRate());
-                res.put("completed", true);
+                    // Limpiamos tabla de releases
+                    this.gitHubReleasesService.deleteAll();
+
+                    // Actualizamos proyecto
+                    Project project = projectService.findByAddress(owner+"/"+repo);
+                    project.setReleaseFrequency(releaseFrequencyMetric.getT1());
+                    project.setLeadTime(leadTimeForReleasedChangesMetric.getT1());
+                    project.setTimeToRepair(timeToRepairCodeMetric.getT1());
+                    project.setBugIssuesRate(bugIssuesRateMetric);
+                    this.projectService.save(project);
+
+                    // Creamos benchmark
+                    Benchmark benchmark = new Benchmark();
+                    benchmark.setPeriod(periods[period]);
+                    benchmark.setProjectName(project.getName());
+                    benchmark.setReleaseFrequency(project.getReleaseFrequency());
+                    benchmark.setLeadTime(project.getLeadTime());
+                    benchmark.setTimeToRepair(project.getTimeToRepair());
+                    benchmark.setBugIssuesRate(project.getBugIssuesRate());
+                    this.benchmarkService.save(benchmark);
+
+                    // Construimos el res 
+                    res.put("releaseFrequency", project.getReleaseFrequency());
+                    res.put("leadTimeForReleasedChanges", project.getLeadTime());
+                    res.put("timeToRepairCode", project.getTimeToRepair());
+                    res.put("bugIssuesRate", project.getBugIssuesRate());
+                    res.put("completed", true);
+                    res.put("emptyReleases", false);
+
+                }
                 
             }catch(Exception e){
                 this.gitHubReleasesService.deleteAll();
                 System.out.println("Error: no se ha podido medir " + repo + "/" + owner);
                 res.put("completed", false);
                 res.put("error", "Error: no se ha podido medir " + repo + "/" + owner);
+                res.put("emptyReleases", false);
                 System.err.println(e.getMessage());
             }
             
         } else {
             this.gitHubReleasesService.deleteAll();
             res.put("completed", false);
+            res.put("emptyReleases", true);
             res.put("error", "Error: no se ha podido medir " + repo + "/" + owner);
         }
 
@@ -112,19 +145,35 @@ public class MetricController {
     public String measureAllPeriods(@PathVariable String owner, @PathVariable String repo) {
         JSONObject res = new JSONObject();
         for (int i = 0; i < periods.length; i++) {
+            // Medimos el proyecto en el periodo de la iteracion
             String result = measure(owner, repo, i);
-            res.put(periods[i], new JSONObject(result));
-            try {
-                System.out.println("Esperando 1 hora para medir el siguiente periodo");
-                // Thread.sleep(3600000); // Esperar 1 hora (3600000 ms)
-                Thread.sleep(3000000); // Esperar 50 min
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                res.put("error", "Error: la operación fue interrumpida");
-                return res.toString();
-            }
+            JSONObject resultJSON = new JSONObject(result);
+            res.put(periods[i], resultJSON);
+
+            //Si no hay releases en el periodo, se pasa al siguiente sin esperar
+            if(resultJSON.getBoolean("emptyReleases")){
+                System.out.println("No habían releases en el periodo, midiendo el siguiente...");
+            } else{
+                try {
+                    if(i == periods.length - 1){
+                        System.out.println("Medición de " + owner + '/' + repo + " completada.");
+                        res.put("completed", true);
+                        this.colorRangeService.defineRanges();
+                        return res.toString();
+                    }
+                    System.out.println("Esperando 45 minutos para medir el siguiente periodo");
+                    // Thread.sleep(3600000); // Esperar 1 hora (3600000 ms)
+                    //Thread.sleep(3000000); // Esperar 50 min
+                    Thread.sleep(2700000); // Esperar 45 min
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    res.put("error", "Error: la operación fue interrumpida");
+                    return res.toString();
+                }
+            } 
         }
         res.put("completed", true);
+        this.colorRangeService.defineRanges();
         return res.toString();
     }
 

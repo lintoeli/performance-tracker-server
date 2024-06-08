@@ -43,6 +43,12 @@ public class ProjectService {
         return project != null;
     }
 
+    /**
+     * MÉTODO DE MIGRACIÓN DE DATOS
+     * 
+     * NO VOLVER A UTILIZAR
+     */
+    
     public void loadFromDatabase(){
         // Recuperamos los proyectos de la tabla GitHubProjects
         List<GithubProject> GHProjects = this.githubProjectService.findAll();
