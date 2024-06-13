@@ -51,5 +51,3 @@ INSERT INTO github_projects (name, address, release_frequency, lead_time_for_rel
 INSERT INTO github_projects (name, address, release_frequency, lead_time_for_released_changes, time_to_repair_code, bug_issues_rate) SELECT 'Airflow', 'apache/airflow', 23.28, 10.71, 87.21, 68.43 WHERE NOT EXISTS (SELECT 1 FROM github_projects WHERE id = 50);
 
 -- BENCHMARKS
-INSERT INTO benchmarks (name, release_frequency, lead_time_for_released_changes, time_to_repair_code, bug_issues_rate) SELECT 'OSS', '{8.5, 22.5}', '{7.5, 21.0}', '{41.0, 151.0}', '{10.0, 54.0}' WHERE NOT EXISTS (SELECT 1 FROM benchmarks WHERE id = 1);
-INSERT INTO benchmarks (name, release_frequency, lead_time_for_released_changes, time_to_repair_code, bug_issues_rate) SELECT 'DORA', '{1.0, 30.0}', '{7.0, 30.0}', '{1.0, 7.0}', '{15.0, 46.0}' WHERE NOT EXISTS (SELECT 1 FROM benchmarks WHERE id = 2);

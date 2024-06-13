@@ -20,24 +20,28 @@ public class Benchmark {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "benchmarks_id_seq")
     private Long id;
 
-    @Column(name = "name", unique = true)
+    @Column(name = "projectName")
     @NotNull
-	private String name;
+	private String projectName;
+
+    @Column(name = "period")
+    @NotNull
+	private String period; //Formato 202X-SY
 
     @Column(name = "release_frequency")
     @NotNull
-	private String releaseFrequency;
+	private Double releaseFrequency;
 
-    @Column(name = "lead_time_for_released_changes")
+    @Column(name = "lead_time")
     @NotNull
-	private String leadTimeForReleasedChanges;
+	private Double leadTime;
 
-    @Column(name = "time_to_repair_code")
+    @Column(name = "time_to_repair")
     @NotNull
-	private String timeToRepairCode;
+	private Double timeToRepair;
 
     @Column(name = "bug_issues_rate")
     @NotNull
-	private String bugIssuesRate;
+	private Double bugIssuesRate;
     
 }
