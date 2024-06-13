@@ -23,6 +23,10 @@ public class MetricService implements IMetricService {
 	 */
 	public Tuple2<Double,Double> calculateMeanAndVariance(List<Long> list) {
 
+		if(list.size() == 0){
+			return Tuples.of(0.0, 0.0);
+		}
+
 		//We divide the elements of the list by a number to transform the results to days
 		double divider = 86400000.0;
 

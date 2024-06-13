@@ -25,6 +25,7 @@ import com.diversolab.entities.github.GithubIssue;
 import com.diversolab.entities.github.GithubIssueEvent;
 import com.diversolab.entities.github.GithubIssueResult;
 import com.diversolab.entities.github.GithubRelease;
+import com.diversolab.security.Token;
 
 import io.netty.channel.ChannelOption;
 import reactor.netty.http.client.HttpClient;
@@ -55,6 +56,9 @@ public class GitHubService implements IGitHubService {
 	// 	}
 	// };
 	// Consumer<HttpHeaders> headers = it -> it.addAll(mvmap);
+
+	// Crear una clase Token.java con un atributo String token que contenga "token [PAT-GITHUB]"
+	Token token = new Token();
 	HttpClient httpClient = HttpClient.create().responseTimeout(Duration.ofSeconds(20)).option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
 	WebClient client = WebClient.builder()
     .clientConnector(new ReactorClientHttpConnector(httpClient))
@@ -64,8 +68,7 @@ public class GitHubService implements IGitHubService {
     .defaultHeaders(header -> {
         header.setBasicAuth(user, password);
         header.set("User-Agent", "lintoeli/performance-tracker-server");
-		// IMPORTANTE: COMENTAR Y DESCOMENTAR ESTA LÍNEA PARA LOS COMMITS
-        //header.set("Authorization", "token ");
+        header.set("Authorization", token.getToken());
     })
     .baseUrl("https://api.github.com/")
     .build();
@@ -372,7 +375,7 @@ public class GitHubService implements IGitHubService {
 		System.out.println("Aqui entra");
 		releasesList = releasesList.stream().filter(release -> release.getCreatedAt().getTime() < lastRelease.getCreatedAt().getTime() && (!(release.getPrerelease()))).collect(Collectors.toList());
 		while(releasesList.size() == 0){
-			if(page == 10){
+			if(page == 11){
 				System.out.println("ha salido del bucle");
 				break;
 			}

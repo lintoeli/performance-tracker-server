@@ -43,6 +43,12 @@ public class ProjectService {
         return project != null;
     }
 
+    /**
+     * MÉTODOS DE MIGRACIÓN DE DATOS
+     * 
+     * NO VOLVER A UTILIZAR
+     */
+    
     public void loadFromDatabase(){
         // Recuperamos los proyectos de la tabla GitHubProjects
         List<GithubProject> GHProjects = this.githubProjectService.findAll();
@@ -68,5 +74,29 @@ public class ProjectService {
             }
             
         }
+    }
+
+    public Project loadOneFromDatabase(String address){
+        GithubProject p = this.githubProjectService.findByAddress(address);
+        try {
+            Project project = new Project();
+            // Info del proyecto:
+            project.setTitle(p.getName());
+            project.setAddress(p.getAddress());
+            project.setName(p.getName().toLowerCase().replace(" ", ""));
+
+            // Metricas de prueba:
+            project.setBugIssuesRate(p.getBugIssuesRate());
+            project.setLeadTime(p.getLeadTimeForReleasedChanges());
+            project.setReleaseFrequency(p.getReleaseFrequency());
+            project.setTimeToRepair(p.getTimeToRepairCode());
+
+            return this.save(project);
+
+        } catch (Exception e) {
+            System.out.println("Error al guardar el proyecto con address: " + address);
+            return null;
+        }
+        
     }
 }

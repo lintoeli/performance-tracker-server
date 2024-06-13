@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.diversolab.entities.Project;
+import com.diversolab.servicies.ColorRangeService;
 import com.diversolab.servicies.ProjectService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProjectController {
     private final ProjectService projectService;
+    private final ColorRangeService colorRangeService;
 
     @CrossOrigin
     @GetMapping("/all")
@@ -45,19 +47,38 @@ public class ProjectController {
     }
 
     @CrossOrigin
+    @GetMapping("/by-address")//?address={nombre}
+    public ResponseEntity<Project> getProjectByAddress(@RequestParam String address) {
+    	Project project = projectService.findByAddress(address);
+        return project != null ? ResponseEntity.ok(project) : ResponseEntity.notFound().build();
+    }
+
+    @CrossOrigin
     @PostMapping("/add")
     public ResponseEntity<Project> addProject(@RequestBody Project project) {
         try {
             Project savedProject = projectService.save(project);
+            this.colorRangeService.defineRanges();
             return ResponseEntity.ok(savedProject);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
     }
 
+    /**
+     * ENDPOINTS DE MIGRACIÓN DE DATOS
+     * 
+     * NO VOLVER A UTILIZAR EN PRODUCCIÓN
+     */
     @CrossOrigin
     @PostMapping("/load-from-database")
     public void loadProjectFromDatabase() {
         this.projectService.loadFromDatabase();
+    }
+
+    @CrossOrigin
+    @PostMapping("/load-one-from-database")
+    public void loadProjectFromDatabase(@RequestParam String address) {
+        this.projectService.loadOneFromDatabase(address);
     }
 }
