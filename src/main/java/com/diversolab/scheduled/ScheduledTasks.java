@@ -24,31 +24,12 @@ public class ScheduledTasks {
     private MetricService metricService;
     private BenchmarkService benchmarkService;
     private ColorRangeService colorRangeService;
-    
-    // @Scheduled(fixedRate = 60000)
-    // public void imprimirHolaMundo() {
-    //     System.out.println("Hola Mundo");
-
-    //      // Obtener la instancia del calendario para la fecha y hora actual
-    //     Calendar calendario = Calendar.getInstance();
-
-    //     // Extraer el año actual
-    //     int año = calendario.get(Calendar.YEAR);
-
-    //     // Extraer el mes actual y ajustar por 1, ya que Calendar.MONTH devuelve un índice basado en 0
-    //     int mes = calendario.get(Calendar.MONTH) + 1;
-
-    //     // Imprimir los resultados
-    //     System.out.println("Año: " + año);
-    //     System.out.println("Mes: " + mes);
-    //     System.out.println("------------------------------------------------");
-    // }
 
     /**
      * Función para automatizar el cálculo de métricas de forma semestral
      * Descomentar el @Scheduled para que funcione automáticamente si el backend está arrancado
      */
-    //@Scheduled(cron = "0 0 0 1 1,7 *")
+    @Scheduled(cron = "0 0 0 1 1,7 *")
     public void updateColorRangesAndProjects() {
         // Paso 1: Obtener las fechas de nuestro semestre y el string period
 

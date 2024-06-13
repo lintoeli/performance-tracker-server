@@ -68,7 +68,7 @@ public class GitHubService implements IGitHubService {
     .defaultHeaders(header -> {
         header.setBasicAuth(user, password);
         header.set("User-Agent", "lintoeli/performance-tracker-server");
-        header.set("Authorization", token.token);
+        header.set("Authorization", token.getToken());
     })
     .baseUrl("https://api.github.com/")
     .build();
