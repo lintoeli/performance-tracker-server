@@ -15,7 +15,7 @@
 	<name>performance-tracker</name>
 	<description>Performance-Tracker project that enables the measurement of metrics and the benchmarking of different projects.</description>
 	<properties>
-		<java.version>11</java.version>
+		<java.version>17</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
