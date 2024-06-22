@@ -26,13 +26,13 @@ public class ColorRange {
 
     @Column(name = "green")
     @NotNull
-	private String green; // Formato {start: Double, end: Double}
+	private String green; // Formato "Double, Double"
 
     @Column(name = "yellow")
     @NotNull
-	private String yellow; // Formato {start: Double, end: Double}
+	private String yellow; // Formato "Double, Double"
 
     @Column(name = "red")
     @NotNull
-	private String red; // Formato {start: Double, end: Double}
+	private String red; // Formato "Double, Double"
 }

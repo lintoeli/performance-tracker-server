@@ -101,10 +101,10 @@ public class ColorRangeServiceTest {
 
     @Test
     public void testFindByMetric_NotFound() {
-        when(colorRangeRepository.findByMetric("releaseFrequency")).thenReturn(Optional.empty());
+        when(colorRangeRepository.findByMetric("fakeMetric")).thenReturn(Optional.empty());
 
         assertThrows(NoSuchElementException.class, () -> {
-            colorRangeService.findByMetric("releaseFrequency");
+            colorRangeService.findByMetric("fakeMetric");
         });
     }
 
